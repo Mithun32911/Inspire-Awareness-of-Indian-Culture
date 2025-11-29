@@ -333,6 +333,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s ease;
+}
 
 /* Authentication error style used across login pages */
 .auth-error {
@@ -356,6 +357,25 @@
   margin-top: 0.8rem;
   box-shadow: 0 2px 6px rgba(27,94,32,0.06);
 }
+
+/* Banner that sits at the top of the login block (not fixed to viewport) */
+.top-success-banner {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  display: block;
+}
+
+/* Make the banner visually a solid green box with white text when used inside the card */
+.top-success-banner .auth-success {
+  background: linear-gradient(180deg, #1e7a2a 0%, #12621e 100%);
+  color: #fff;
+  border: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(15, 80, 30, 0.12);
+  font-weight: 700;
+  margin-top: 0;
 }
 
 .login-btn:hover {

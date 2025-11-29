@@ -107,6 +107,11 @@ const UserLogin = () => {
         Back
       </button>
       <div className="admin-login-form">
+        {successMessage && (
+          <div className="top-success-banner" aria-live="polite">
+            <div className="auth-success">{successMessage}</div>
+          </div>
+        )}
         <h1>User Login</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -143,9 +148,7 @@ const UserLogin = () => {
           {error && (
             <div className="auth-error">{error}</div>
           )}
-          {successMessage && (
-            <div className="auth-success" style={{ color: '#1b5e20' }}>{successMessage}</div>
-          )}
+          {/* success message shown at top of login card */}
 
           <div style={{ marginTop: '1rem' }}>
             <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>

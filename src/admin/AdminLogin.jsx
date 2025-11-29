@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { initiateForgotPassword } from '../services/authService';
 import './Admin.css';
 
 const AdminLogin = ({ onLogin }) => {
@@ -12,6 +13,7 @@ const AdminLogin = ({ onLogin }) => {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const getSavedCredentials = () => {
     const saved = localStorage.getItem('adminCredentials');
@@ -72,9 +74,13 @@ const AdminLogin = ({ onLogin }) => {
     const matchesEmail = identifier === saved.email && password === saved.password;
     if (matchesUsername || matchesEmail) {
       setError('');
-      onLogin();
-      // Optional small success feedback
-      // setError('Login successful!');
+      // Show a success message briefly, then trigger the parent login handler
+      setSuccessMessage('Login successful! Redirecting...');
+      // small delay so user sees the success message
+      setTimeout(() => {
+        setSuccessMessage('');
+        onLogin();
+      }, 800);
     } else {
       setError('Invalid credentials. Please try again or register.');
     }
@@ -177,6 +183,7 @@ const AdminLogin = ({ onLogin }) => {
               <button type="button" className="admin-btn" onClick={() => setIsRegistering(true)}>Register</button>
             </div>
             {error && <div className="auth-error">{error}</div>}
+            {successMessage && <div className="auth-success">{successMessage}</div>}
             <div style={{ marginTop: 12 }}>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /> Remember me

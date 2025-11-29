@@ -340,6 +340,22 @@
   font-weight: 800;
   margin-top: 1rem;
 }
+
+/* Success message for logins */
+.auth-success {
+  color: #1b5e20; /* stronger green */
+  background: linear-gradient(180deg, #e8f5e9, #d0f0d6); /* subtle green gradient */
+  border: 1px solid rgba(27,94,32,0.12);
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1rem;
+  margin-top: 0.8rem;
+  box-shadow: 0 2px 6px rgba(27,94,32,0.06);
+}
 }
 
 .login-btn:hover {

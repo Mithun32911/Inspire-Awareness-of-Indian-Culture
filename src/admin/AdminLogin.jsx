@@ -183,7 +183,7 @@ const AdminLogin = ({ onLogin }) => {
               <button type="button" className="admin-btn" onClick={() => setIsRegistering(true)}>Register</button>
             </div>
             {error && <div className="auth-error">{error}</div>}
-            {successMessage && <div className="auth-success">{successMessage}</div>}
+            {successMessage && <div className="auth-success" style={{ color: '#1b5e20' }}>{successMessage}</div>}
             <div style={{ marginTop: 12 }}>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /> Remember me

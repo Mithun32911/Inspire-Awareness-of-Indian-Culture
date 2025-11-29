@@ -10,6 +10,7 @@ const UserLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -52,21 +53,25 @@ const UserLogin = () => {
       if (result.success) {
         // Check if user role matches the login type
         if (result.user.role === 'user') {
-          // Check if there's a previous page stored
+          // Show success message briefly then navigate so user sees the confirmation
+          setSuccessMessage('Login successful! Redirecting...');
           const previousPage = sessionStorage.getItem('previousPage');
-          if (previousPage) {
-            // Navigate to dashboard with previous page info
-            navigate(`${result.user.dashboard}?from=${encodeURIComponent(previousPage)}`);
-          } else {
-            navigate(result.user.dashboard);
-          }
+          setTimeout(() => {
+            setSuccessMessage('');
+            if (rememberMe) rememberCredentials(username.trim(), password.trim());
+            if (previousPage) {
+              navigate(`${result.user.dashboard}?from=${encodeURIComponent(previousPage)}`);
+            } else {
+              navigate(result.user.dashboard);
+            }
+          }, 800);
         } else {
           setError('Invalid credentials for User login. Please check your role.');
         }
       } else {
         setError(result.message);
       }
-        if (result.success && rememberMe) rememberCredentials(username.trim(), password.trim());
+        // rememberCredentials will be handled when we actually navigate (so it persists before leaving)
     } catch (err) {
       console.error('UserLogin error:', err);
       setError('Login failed. Please try again.');
@@ -137,6 +142,9 @@ const UserLogin = () => {
           )}
           {error && (
             <div className="auth-error">{error}</div>
+          )}
+          {successMessage && (
+            <div className="auth-success" style={{ color: '#1b5e20' }}>{successMessage}</div>
           )}
 
           <div style={{ marginTop: '1rem' }}>

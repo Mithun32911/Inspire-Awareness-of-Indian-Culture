@@ -12,6 +12,9 @@ const ContentCreatorLogin = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showForgot, setShowForgot] = useState(false);
+  const [captcha, setCaptcha] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -36,6 +39,8 @@ const ContentCreatorLogin = () => {
       setPassword(remembered.password || '');
       setRememberMe(true);
     }
+    const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+    setCaptcha(gen());
   }, []);
 
   const handleSubmit = async (e) => {
@@ -49,9 +54,16 @@ const ContentCreatorLogin = () => {
     setError('');
 
     try {
-  const result = await authenticateUser(username.trim(), password.trim());
+      setCaptchaError('');
+      if (!captchaInput || captchaInput.trim().toUpperCase() !== captcha) {
+        setCaptchaError(t('auth.captcha_invalid', 'Invalid captcha'));
+        setLoading(false);
+        return;
+      }
 
-      if (result.success) {
+      let result = await authenticateUser(username.trim(), password.trim());
+
+      if (result && result.success) {
         // Check if user role matches the login type
         if (result.user.role === 'content-creator') {
           // Show success message briefly then navigate
@@ -59,8 +71,11 @@ const ContentCreatorLogin = () => {
           const previousPage = sessionStorage.getItem('previousPage');
           setTimeout(() => {
             setSuccessMessage('');
+            if (rememberMe) rememberCredentials(username.trim(), password.trim());
             if (previousPage) {
-              navigate(`${result.user.dashboard}?from=${encodeURIComponent(previousPage)}`);
+              // Clear stored page and navigate there
+              sessionStorage.removeItem('previousPage');
+              navigate(previousPage);
             } else {
               navigate(result.user.dashboard);
             }
@@ -69,15 +84,21 @@ const ContentCreatorLogin = () => {
           setError(t('contentCreatorLogin.invalid_role'));
         }
       } else {
-        setError(result.message);
+        setError(result ? result.message : t('auth.login_failed'));
       }
     } catch (err) {
       console.error('ContentCreatorLogin error:', err);
-      setError('Login failed. Please try again.');
+      setError(t('auth.login_failed'));
     } finally {
       setLoading(false);
     }
-      if (result && result.success && rememberMe) rememberCredentials(username.trim(), password.trim());
+
+    const refreshCaptcha = () => {
+      const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+      setCaptcha(gen());
+      setCaptchaInput('');
+      setCaptchaError('');
+    };
   };
 
   const startForgot = () => {
@@ -174,6 +195,15 @@ const ContentCreatorLogin = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+            <div style={{ padding: 12, background: '#f3f3f3', borderRadius: 6, fontWeight: '700', letterSpacing: 3, fontSize: 20, userSelect: 'none' }}>{captcha}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', width: 220, maxWidth: '60%' }}>
+              <input type="text" value={captchaInput} onChange={e => setCaptchaInput(e.target.value)} placeholder={t('auth.captcha_placeholder', 'Enter captcha')} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc' }} />
+              <button type="button" onClick={() => { const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase(); setCaptcha(gen()); setCaptchaInput(''); setCaptchaError(''); }} className="admin-btn secondary" style={{ marginTop: 8 }}>Refresh</button>
+              {captchaError && <div style={{ color: '#ff6b6b', marginTop: 6 }}>{captchaError}</div>}
+            </div>
           </div>
         </form>
       </div>

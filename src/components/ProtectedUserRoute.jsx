@@ -21,8 +21,9 @@ const ProtectedUserRoute = ({ children }) => {
         setTimeout(() => navigate(currentUser.dashboard), 500);
       }
     } else {
-      // No user logged in, store current page and redirect to user login
-      sessionStorage.setItem('previousPage', location.pathname);
+      // No user logged in, store full current URL (path + search + hash) and redirect to user login
+      const fullPath = `${location.pathname || ''}${location.search || ''}${location.hash || ''}`;
+      sessionStorage.setItem('previousPage', fullPath);
       setAuthState('redirect');
       setTimeout(() => navigate('/admin/user-login?redirect=protected-content'), 500);
     }

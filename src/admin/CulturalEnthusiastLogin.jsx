@@ -15,6 +15,9 @@ const CulturalEnthusiastLogin = () => {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
+  const [captcha, setCaptcha] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +27,8 @@ const CulturalEnthusiastLogin = () => {
       setPassword(remembered.password || '');
       setRememberMe(true);
     }
+    const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+    setCaptcha(gen());
   }, []);
 
   const handleSubmit = async (e) => {
@@ -37,28 +42,47 @@ const CulturalEnthusiastLogin = () => {
     setError('');
 
     try {
-      const result = authenticateUser(username.trim(), password.trim());
+      setCaptchaError('');
+      if (!captchaInput || captchaInput.trim().toUpperCase() !== captcha) {
+        setCaptchaError('Invalid captcha');
+        setLoading(false);
+        return;
+      }
+      const result = await authenticateUser(username.trim(), password.trim());
       
-      if (result.success) {
+      if (result && result.success) {
         // Check if user role matches the login type (admin for cultural enthusiast)
         if (result.user.role === 'admin') {
           setSuccessMessage('Login successful! Redirecting...');
           setTimeout(() => {
             setSuccessMessage('');
-            navigate(result.user.dashboard);
+            const previousPage = sessionStorage.getItem('previousPage');
+            if (previousPage) {
+              sessionStorage.removeItem('previousPage');
+              navigate(previousPage);
+            } else {
+              navigate(result.user.dashboard);
+            }
           }, 800);
         } else {
           setError('Invalid credentials for Admin login. Please check your role.');
         }
       } else {
-        setError(result.message);
+        setError(result ? result.message : 'Login failed.');
       }
-        if (result.success && rememberMe) rememberCredentials(username.trim(), password.trim());
+      if (result && result.success && rememberMe) rememberCredentials(username.trim(), password.trim());
     } catch {
       setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshCaptcha = () => {
+    const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+    setCaptcha(gen());
+    setCaptchaInput('');
+    setCaptchaError('');
   };
 
   return (
@@ -162,6 +186,14 @@ const CulturalEnthusiastLogin = () => {
             marginBottom: '1.5rem',
             letterSpacing: '1px',
           }}>{loading ? 'Logging in...' : 'Login'}</button>
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+            <div style={{ padding: 12, background: '#f3f3f3', borderRadius: 6, fontWeight: '700', letterSpacing: 3, fontSize: 20, userSelect: 'none' }}>{captcha}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', width: 220, maxWidth: '60%' }}>
+              <input type="text" value={captchaInput} onChange={e => setCaptchaInput(e.target.value)} placeholder="Enter captcha" style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc' }} />
+              <button type="button" onClick={refreshCaptcha} className="admin-btn secondary" style={{ marginTop: 8 }}>Refresh</button>
+              {captchaError && <div style={{ color: '#ff6b6b', marginTop: 6 }}>{captchaError}</div>}
+            </div>
+          </div>
           {error && (
             <div style={{ color: '#ff6b6b', marginTop: '1rem', fontWeight: 'bold', fontSize: '1rem' }}>{error}</div>
           )}

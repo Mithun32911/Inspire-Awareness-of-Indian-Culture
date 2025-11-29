@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { initiateForgotPassword } from '../services/authService';
@@ -17,6 +17,9 @@ const AdminLogin = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [captcha, setCaptcha] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
 
   const getSavedCredentials = () => {
     const saved = localStorage.getItem('adminCredentials');
@@ -59,12 +62,23 @@ const AdminLogin = ({ onLogin }) => {
     setRegisterData({ email: '', username: '', password: '', confirmPassword: '' });
   };
 
+  useEffect(() => {
+    const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+    setCaptcha(gen());
+  }, []);
+
   const handleLogin = (e) => {
     e.preventDefault();
     const saved = getSavedCredentials();
     const { identifier, password } = credentials;
     // clear previous error
     setError('');
+    setCaptchaError('');
+    // validate captcha
+    if (!captchaInput || captchaInput.trim().toUpperCase() !== captcha) {
+      setCaptchaError(t('adminLogin.invalid_captcha') || 'Invalid captcha');
+      return;
+    }
     if (!identifier || !password) {
       setError(t('adminLogin.missing_fields') || 'Please enter your email/username and password.');
       return;
@@ -186,6 +200,15 @@ const AdminLogin = ({ onLogin }) => {
                 required
                 placeholder={t('adminLogin.password_placeholder')}
               />
+            </div>
+
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+              <div style={{ padding: 12, background: '#f3f3f3', borderRadius: 6, fontWeight: '700', letterSpacing: 3, fontSize: 20, userSelect: 'none' }}>{captcha}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', width: 220, maxWidth: '60%' }}>
+                <input type="text" value={captchaInput} onChange={e => setCaptchaInput(e.target.value)} placeholder={t('Enter Captcha') || 'Enter captcha'} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc' }} />
+                <button type="button" onClick={() => { const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase(); setCaptcha(gen()); }} className="admin-btn secondary" style={{ marginTop: 8 }}>{t('Refresh') || 'Refresh'}</button>
+                {captchaError && <div style={{ color: '#ff6b6b', marginTop: 6 }}>{captchaError}</div>}
+              </div>
             </div>
             <div className="admin-btn-row">
               <button type="submit" className="admin-btn primary">{t('adminLogin.login')}</button>

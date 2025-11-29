@@ -41,17 +41,18 @@ const TourGuideSignup = () => {
     setError('');
 
     try {
-      const result = registerUser(formData.email.trim(), formData.password.trim(), formData.name.trim(), 'tour-guide');
-      
-      if (result.success) {
+      const result = await registerUser(formData.email.trim(), formData.password.trim(), formData.name.trim(), 'tour-guide');
+
+      if (result && result.success) {
         setSuccess(result.message);
         setTimeout(() => {
           navigate('/admin/tour-guide-login');
         }, 2000);
       } else {
-        setError(result.message);
+        setError(result ? result.message : 'Registration failed.');
       }
-    } catch {
+    } catch (err) {
+      console.error('TourGuideSignup error:', err);
       setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);

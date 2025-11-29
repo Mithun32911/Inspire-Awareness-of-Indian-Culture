@@ -13,6 +13,9 @@ const TourGuideLogin = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showForgot, setShowForgot] = useState(false);
+  const [captcha, setCaptcha] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -38,6 +41,8 @@ const TourGuideLogin = () => {
       setPassword(remembered.password || '');
       setRememberMe(true);
     }
+    const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+    setCaptcha(gen());
   }, []);
 
   const handleSubmit = async (e) => {
@@ -51,9 +56,16 @@ const TourGuideLogin = () => {
     setError('');
 
     try {
-      const result = authenticateUser(username.trim(), password.trim());
+      setCaptchaError('');
+      if (!captchaInput || captchaInput.trim().toUpperCase() !== captcha) {
+        setCaptchaError('Invalid captcha');
+        setLoading(false);
+        return;
+      }
 
-      if (result.success) {
+      const result = await authenticateUser(username.trim(), password.trim());
+
+      if (result && result.success) {
         // Ensure role matches tour-guide
         if (result.user.role === 'tour-guide') {
           // show success message briefly then navigate
@@ -62,7 +74,8 @@ const TourGuideLogin = () => {
           setTimeout(() => {
             setSuccessMessage('');
             if (previousPage) {
-              navigate(`${result.user.dashboard}?from=${encodeURIComponent(previousPage)}`);
+              sessionStorage.removeItem('previousPage');
+              navigate(previousPage);
             } else {
               navigate(result.user.dashboard);
             }
@@ -71,10 +84,10 @@ const TourGuideLogin = () => {
           setError(t('tourGuideLogin.invalid_role'));
         }
       } else {
-        setError(result.message);
+        setError(result ? result.message : t('auth.login_failed'));
       }
         // Save remembered credentials if checkbox selected
-        if (result.success && rememberMe) {
+        if (result && result.success && rememberMe) {
           rememberCredentials(username.trim(), password.trim());
         }
     } catch (err) {
@@ -139,6 +152,15 @@ const TourGuideLogin = () => {
             />
           </div>
 
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+            <div style={{ padding: 12, background: '#f3f3f3', borderRadius: 6, fontWeight: '700', letterSpacing: 3, fontSize: 20, userSelect: 'none' }}>{captcha}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', width: 220, maxWidth: '60%' }}>
+              <input type="text" value={captchaInput} onChange={e => setCaptchaInput(e.target.value)} placeholder="Enter captcha" style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #ccc' }} />
+              <button type="button" onClick={() => { const gen = () => Math.random().toString(36).slice(2, 8).toUpperCase(); setCaptcha(gen()); setCaptchaInput(''); setCaptchaError(''); }} className="admin-btn secondary" style={{ marginTop: 8 }}>Refresh</button>
+              {captchaError && <div style={{ color: '#ff6b6b', marginTop: 6 }}>{captchaError}</div>}
+            </div>
+          </div>
+
           <div className="form-actions" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
             <button type="submit" className="admin-btn secondary" disabled={loading} style={{ width: 220, maxWidth: '90%', background: loading ? '#888' : '#1976d2', color: '#fff', border: 'none', padding: '0.6rem 1rem', borderRadius: 6 }}>{loading ? t('auth.logging_in') : t('auth.login')}</button>
           </div>
@@ -186,5 +208,4 @@ const TourGuideLogin = () => {
     </div>
   );
 };
-
 export default TourGuideLogin;

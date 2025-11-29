@@ -43,9 +43,9 @@ const UserSignup = () => {
     setError('');
 
     try {
-      const result = registerUser(formData.email.trim(), formData.password.trim(), formData.name.trim(), 'user');
+      const result = await registerUser(formData.email.trim(), formData.password.trim(), formData.name.trim(), 'user');
       
-      if (result.success) {
+      if (result && result.success) {
         setSuccess(result.message || t('userSignup.success', 'Account created successfully.'));
         setTimeout(() => {
           navigate('/admin/user-login');

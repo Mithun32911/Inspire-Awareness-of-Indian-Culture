@@ -43,17 +43,18 @@ const AdminSignup = () => {
     setError('');
 
     try {
-      const result = registerUser(formData.email.trim(), formData.password.trim(), formData.name.trim(), 'admin');
-      
-      if (result.success) {
+      const result = await registerUser(formData.email.trim(), formData.password.trim(), formData.name.trim(), 'admin');
+
+      if (result && result.success) {
         setSuccess(result.message);
         setTimeout(() => {
           navigate('/admin/enthusiast-login');
         }, 2000);
       } else {
-        setError(result.message);
+        setError(result ? result.message : t('adminSignup.register_failed', 'Registration failed.'));
       }
-      } catch {
+    } catch (err) {
+      console.error('AdminSignup error:', err);
       setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);

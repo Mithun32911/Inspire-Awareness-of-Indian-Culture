@@ -10,6 +10,20 @@ const users = [
 
 async function tryFetchJson(url, options) {
   try {
+    // Ensure headers object exists
+    options = options || {};
+    options.headers = options.headers || {};
+
+    // If calling the local API, attach auth token when present
+    try {
+      if (API_BASE && typeof window !== 'undefined' && url && url.indexOf(API_BASE) === 0) {
+        const token = localStorage.getItem('authToken');
+        if (token) options.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (e) {
+      // ignore localStorage errors
+    }
+
     const res = await fetch(url, options);
     const json = await res.json();
     return { ok: res.ok, json };
@@ -18,20 +32,49 @@ async function tryFetchJson(url, options) {
   }
 }
 
+// Helper: return stored auth token
+export const getAuthToken = () => {
+  try { return localStorage.getItem('authToken'); } catch (e) { return null; }
+};
+
+// Helper: return auth header object
+export const getAuthHeader = () => {
+  const t = getAuthToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+};
+
+export const isAuthenticated = () => !!getAuthToken() && !!getCurrentUser();
+
 export const authenticateUser = async (email, password) => {
   // Try backend first
   if (API_BASE) {
     const { ok, json } = await tryFetchJson(API_BASE + '/api/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password })
     });
+    // If server responded with success
     if (ok && json && json.success) {
       // persist token and user
       try { localStorage.setItem('authToken', json.token); } catch (e) {}
-      const u = { email: json.user.email, role: json.user.role };
+      // Derive dashboard path from role so UI can navigate
+      const getDashboardPath = (userRole) => {
+        switch (userRole) {
+          case 'admin': return '/admin/enthusiast-dashboard';
+          case 'user': return '/admin/user-dashboard';
+          case 'content-creator': return '/admin/content-creator-dashboard';
+          case 'tour-guide': return '/admin/tour-guide-dashboard';
+          default: return '/admin/user-dashboard';
+        }
+      };
+      const u = { email: json.user.email, role: json.user.role, dashboard: getDashboardPath(json.user.role) };
       localStorage.setItem('currentUser', JSON.stringify(u));
       return { success: true, user: u };
     }
-    // fall through to local fallback if network/auth fails
+
+    // If server responded with an error payload (e.g., 401 Unauthorized), surface that message to the caller
+    if (json && !ok) {
+      return { success: false, message: json.message || 'Authentication failed' };
+    }
+    // fall through to local fallback if network/auth fails (no server JSON)
   }
 
   // Fallback (legacy local behavior)
@@ -51,7 +94,16 @@ export const registerUser = async (email, password, name, role) => {
     });
     if (ok && json && json.success) {
       try { localStorage.setItem('authToken', json.token); } catch (e) {}
-      const u = { email: json.user.email, role: json.user.role };
+      const getDashboardPath = (userRole) => {
+        switch (userRole) {
+          case 'admin': return '/admin/enthusiast-dashboard';
+          case 'user': return '/admin/user-dashboard';
+          case 'content-creator': return '/admin/content-creator-dashboard';
+          case 'tour-guide': return '/admin/tour-guide-dashboard';
+          default: return '/admin/user-dashboard';
+        }
+      };
+      const u = { email: json.user.email, role: json.user.role, dashboard: getDashboardPath(json.user.role) };
       localStorage.setItem('currentUser', JSON.stringify(u));
       return { success: true, message: json.message, user: u };
     }

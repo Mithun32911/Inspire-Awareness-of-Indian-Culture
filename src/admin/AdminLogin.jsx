@@ -12,6 +12,7 @@ const AdminLogin = ({ onLogin }) => {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
   const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const getSavedCredentials = () => {
     const saved = localStorage.getItem('adminCredentials');
@@ -72,7 +73,13 @@ const AdminLogin = ({ onLogin }) => {
     const matchesEmail = identifier === saved.email && password === saved.password;
     if (matchesUsername || matchesEmail) {
       setError('');
-      onLogin();
+      // show an inline success banner, then proceed with onLogin
+      setShowSuccess(true);
+      // auto-dismiss after 900ms and then call onLogin to continue navigation
+      setTimeout(() => {
+        setShowSuccess(false);
+        onLogin();
+      }, 900);
       // Optional small success feedback
       // setError('Login successful!');
     } else {
@@ -82,6 +89,15 @@ const AdminLogin = ({ onLogin }) => {
 
   return (
     <div className="admin-container">
+      {/* Success banner shown at top-center */}
+      {showSuccess && (
+        <div className="top-toast" role="status" aria-live="polite">
+          <div className="top-toast-inner">
+            <svg className="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Login successful</span>
+          </div>
+        </div>
+      )}
       <button
         className="admin-back-btn"
         onClick={() => navigate('/')}

@@ -18,17 +18,20 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies (frontend)
-        run: npm ci
-        working-directory: ./
+      - name: Debug: list repository files
+        run: |
+          echo "PWD: $(pwd)"
+          ls -la
+          echo "Listing Fpj directory if present"
+          ls -la Fpj || true
 
       - name: Install frontend dependencies
         run: npm ci
-        working-directory: ./Fpj/Project
+        working-directory: Fpj/Project
 
       - name: Build frontend (Vite)
         run: npm run build
-        working-directory: ./Fpj/Project
+        working-directory: Fpj/Project
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
